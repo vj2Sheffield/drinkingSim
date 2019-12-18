@@ -21,8 +21,9 @@
 %           Improved on annotation and added in row randomiser for data table.
 %           Changed poisson distribution to pre-made matlab function and began
 %           working on gamma distribution
-
-
+% 18-Dec-19 Finished working on gamma distribution. Fixed git stuff.
+%           Removed old 'metrics' section and began to construct improved one using
+%           inbuilt Matlab functionality.
 
 % Housekeeping
 clear, clc
@@ -157,31 +158,11 @@ for k = 1:nAgents
 end
 
 %% Calculations
-% nodes = nAgents;
-% poss_undirect_link = nodes*(nodes - 1)/2;
-% existing_undirect_link = sum(adjacencyMatrix(:) == 1) - mapSize;
-% 
-% n_density = 100*existing_undirect_link/poss_undirect_link;
-% ncc = zeros(mapSize, 1);
-% CC = zeros(mapSize, 1);
-% 
-% for n = 1:mapSize
-%     DoC = sum(adjacencyMatrix(n, :) == 1);
-%     if DoC == 1
-%        CC(n) = 0;
-%     elseif DoC > 1
-%         rowcol = find(adjacencyMatrix(n, :) == 1);
-%         DoC_matrix = adjacencyMatrix(rowcol, rowcol);
-%         CC(n) = sum(DoC_matrix(:) == 1)/2;
-%         po_link = DoC*(DoC - 1)/2; % potential links
-%         CC(n) = CC(n)/po_link;
-%     elseif DoC == 0
-%         CC(n) = NaN;
-%     else
-%         error('Negative OR fractional agent %d', n);
-%     end
-% end
+adjGraph = graph(adjacencyMatrix);
+adjDegree = degree(adjGraph);
+adjEdges = numedges(adjGraph);
 
+adjDensity = adjEdges/(nAgents*(nAgents - 1))*100;
 %% Putting it all together:
 % This section plots the agents and their connections in a toroidal space.
 % The connections are taken from the adjacency matrix (adjacencyMatrix)

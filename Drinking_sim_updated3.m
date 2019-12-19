@@ -157,12 +157,83 @@ for k = 1:nAgents
     end
 end
 
-%% Calculations
+%% Metrics
 adjGraph = graph(adjacencyMatrix);
 adjDegree = degree(adjGraph);
 adjEdges = numedges(adjGraph);
 
-adjDensity = adjEdges/(nAgents*(nAgents - 1))*100;
+adjDensity = adjEdges/(nAgents*(nAgents - 1))*100;  % Calculate network centrality
+
+%% Test Metrics
+clc
+A = [0 1 0 0 1 0;...
+     0 0 1 1 0 0;...
+     0 1 0 1 0 0;...
+     0 1 1 0 0 0;...
+     1 0 1 0 0 0;...
+     0 0 1 0 0 0];
+G = digraph(A);
+nAgents = 6;
+nEdges = numedges(G);
+nNodes = numnodes(G);
+
+% -----------Degree Centrality Test-----------
+inDegree = centrality(G, 'indegree');
+outDegree = centrality(G, 'outdegree');
+totalDegree = inDegree + outDegree;
+
+% -----------Katz Centrality Test-----------
+alpha = 0.9*(1/max(eig(A)));
+beta = 1;
+
+katzCentrality = beta*(inv(eye(nAgents) - alpha*A'))*ones(nAgents, 1);
+katzCentrality = round(katzCentrality, 3, 'significant');
+
+% -----------Closeness Centrality Test-----------
+pathLength = zeros(nAgents, nAgents);
+pathLengthForAPL = zeros(nAgents, nAgents);
+for n = 1:nAgents
+    for m = 1:nAgents
+        [~, pathLength(n, m)] = shortestpath(G, m, n);
+        pathLengthForAPL(n, m) = pathLength(n, m);
+        pathLength(n, m) = 1/pathLength(n, m);
+    end
+end
+pathLength(pathLength == Inf) = 0;
+closenessCentrality = sum(pathLength)'*(1/(nAgents-1));
+inCloseness = centrality(G, 'incloseness');
+outCloseness = centrality(G, 'outcloseness');
+
+% -----------Betweenness Centrality Test-----------
+betweenness = centrality(G, 'betweenness');
+
+% -----------Transitivity-----------
+
+
+% -----------Reciprocity-----------
+count = 0;
+for m = 1:nAgents
+    for n = 1:nAgents
+        if A(m, n) == A(n, m) && n ~= m && A(m, n) == 1
+            count = count + 1;
+        end
+    end
+end
+reciprocity = count/nEdges;
+
+% -----------Average Path Length-----------
+tempAPL = 0;
+validNodes = 0;
+for m = 1:nAgents
+    for n = 1:nAgents
+        if pathLengthForAPL(n, m) ~= Inf && n ~= m
+            tempAPL = pathLengthForAPL(n, m) + tempAPL;
+            validNodes = validNodes + 1;
+        end
+    end
+end
+averagePathLength = tempAPL/(2*nAgents^2);
+
 %% Putting it all together:
 % This section plots the agents and their connections in a toroidal space.
 % The connections are taken from the adjacency matrix (adjacencyMatrix)

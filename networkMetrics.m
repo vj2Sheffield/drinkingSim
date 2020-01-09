@@ -36,66 +36,18 @@ function metricsCell = networkMetrics(A)
     betweenness = centrality(G, 'betweenness');
 
     % -----------Transitivity-----------
-    tempMatrix = zeros(100, 2);
-    count = 0;
-    for m = 1:nAgents
-        for n = 1:nAgents
-            [~, transPathLength] = shortestpath(G, m, n);
-            if transPathLength == 1
-                count = count + 1;
-                tempMatrix(count, 1) = m;
-                tempMatrix(count, 2) = n;
-            end
-        end
-    end
-    tempMatrix((count + 1):end, :) = [];
-
-    count = 0;
-    tempMatrix2 = zeros(100, 3);
-    for m1 = 1:length(tempMatrix)
-        for m2 = 1:length(tempMatrix)
-            if tempMatrix(m1, 2) == tempMatrix(m2, 1)
-                if tempMatrix(m1, 1) ~= tempMatrix(m2, 2)
-                    count = count + 1;
-                    tempMatrix2(count, 1:3) = [tempMatrix(m1, 1), tempMatrix(m2, 1:2)];
-                end
-            end
-        end
-    end
-    tempMatrix2((count + 1):end, :) = [];
-
-    nOpenTriplets = length(tempMatrix2);
-    tempMatrix2 = sort(tempMatrix2, 2);
-
-    [~, ~, ic] = unique(tempMatrix2, 'rows');
-    a_counts = accumarray(ic, 1);
-    nClosedTriplets = sum(a_counts(a_counts > 1));
-
+    nOpenTriplets = sum(sum(A'^2)) - trace(A'^2);
+    nClosedTriplets = trace(A'^3);
     clusteringCoefficient = nClosedTriplets/nOpenTriplets;
 
     % -----------Reciprocity-----------
-    count = 0;
-    for m = 1:nAgents
-        for n = 1:nAgents
-            if A(m, n) == A(n, m) && n ~= m && A(m, n) == 1
-                count = count + 1;
-            end
-        end
-    end
-    reciprocity = count/nEdges;
-
+    reciprocity = (1/nEdges)*trace(A'^2);
+    
     % -----------Average Path Length-----------
-    tempAPL = 0;
-    validNodes = 0;
-    for m = 1:nAgents
-        for n = 1:nAgents
-            if pathLengthForAPL(n, m) ~= Inf && n ~= m
-                tempAPL = pathLengthForAPL(n, m) + tempAPL;
-                validNodes = validNodes + 1;
-            end
-        end
-    end
-    averagePathLength = tempAPL/(2*nAgents^2);
+    pathLengths = distances(G);
+    pathLengths(~isfinite(pathLengths)) = 0;
+    pathLengths = sum(pathLengths, 'all');
+    APL = pathLengths/(nAgents*(nAgents - 1));
 
     % -----------Return Cell-----------
     % Density, Centrality, Transitivity, Reciprocity, APL
@@ -115,7 +67,7 @@ function metricsCell = networkMetrics(A)
     metricsCell{4, 2} = reciprocity;
 
     metricsCell{5, 1} = 'Average Path Length';
-    metricsCell{5, 2} = averagePathLength;
+    metricsCell{5, 2} = APL;
 
     clearvars -except metricsCell
 end

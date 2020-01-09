@@ -33,7 +33,8 @@ end
 
 % Declare modifiable variables
 mapSize = 1000; % Size of the grid on which agents are placed
-nAgents = 10;   % Number of agents used in simulation
+nAgents = 100;   % Number of agents used in simulation
+nConnections = 12;
 
 wSex = 1;  % Weight parameters as named
 wAge = 1;   % Age
@@ -65,7 +66,7 @@ clear wSex wAge wBlack wHispanic wWhite wOther wEmpStatus wParentStatus...  % Cl
     xCoord yCoord wDrinkFrequency
 
 %% Preallocate variables 
-socialReachDistribution = readmatrix('poiss_RNG.csv');    % Heterogeneous social reach distribution
+socialReachDistribution = readmatrix('Uniform_RNG.csv');    % Heterogeneous social reach distribution
 x_y_coord = readmatrix('xy_coord_RNG.csv'); % Get x and y coordinates
 USA_data = readtable('USA1000.csv');    % Read in data table
 
@@ -85,11 +86,13 @@ headers = {'Sex', 'Age', 'BLA', 'SPA', 'WHI',...    % Set headers for future use
     'Marital Status', 'Education', 'Income', 'Drinking Status',...
     'Drink Frequency', 'HED', 'GPD', 'Drinks per Month', ...
     'X-coord', 'Y-coord'};
+% queryPoint = nConnections/nAgents*100;
 
 figure; 
 histogram(socialReachDistribution); % Plot histogram of social reaches
 title('Histogram of Social reaches');   % Title
 xlabel('Size of Social Reach'); ylabel('Number of Agents'); % Plot labels
+
 %% Non-numeric data processing
 % Some of the data is non-numeric. To use these in this model, they need
 % to be converted to numeric data. Some (such as income and education) can
@@ -156,9 +159,23 @@ for k = 1:nAgents
         end
     end
 end
+% plot(digraph(adjacencyMatrix))
 
 %% Metrics
 metricsCell = networkMetrics(adjacencyMatrix);
+temp = metricsCell{2,2};
+temp = temp(1:end, 1);
+[count, bins] = hist(temp);
+count = count/nAgents*100;
+% bins = bins/(2*nAgents)*100;
+frequencyMatrix = [bins; count];
+plot(bins, count)
+title('DoC - Exponential');
+xlabel('Degree of Connectivity (% of total possible connections)'); 
+ylabel('Frequency %');
+grid on
+% csvwrite('powerFrequency.csv', frequencyMatrix)  % Write to file
+sum(adjacencyMatrix,'all')
 
 %% Plotting it all together:
 % This section plots the agents and their connections in a toroidal space.
@@ -166,7 +183,7 @@ metricsCell = networkMetrics(adjacencyMatrix);
 % and plotted using setloop(). Connections that aren't made are also
 % tracked in the count variable. The output of this section is a plot
 % showing nodes and connections.
-
+figure
 count = 0;  % Counting connections not made
 for k = 1:nAgents
     for m = 1:nAgents 
@@ -185,11 +202,58 @@ scatter(x_y_coord(1:nAgents, 1), x_y_coord(1:nAgents, 2), 'k', 'filled');   % Pl
 grid on
 xlim([0 mapSize]); ylim([0 mapSize]);   % Set plot size
 
-%% Test Function
+%% 
+% figure
+% uniform = readmatrix('uniformFrequency2.csv');
+% exponential = readmatrix('exponentialFrequency2.csv');
+% poisson = readmatrix('poissonFrequency.csv');
+% 
+% plot(uniform(1, :), uniform(2, :));
+% hold on
+% plot(exponential(1, :), exponential(2, :));
+% plot(poisson(1, :), poisson(2, :));
+% grid on
+% legend('Uniform','Exponential','Poisson');
 
-A = [0 1 1 1 0;...
-     0 0 1 0 0;...
-     0 1 0 0 0;...
-     0 0 0 1 0;...
-     0 1 0 0 0];
- networkMetrics(A)
+% clc
+% n = 16;
+% A = diag(ones(n - 1, 1), -1) + diag(zeros(n, 1), 0) + diag(ones(n - 1, 1), 1);
+% A(n, 1) = 1; A(1, n) = 1;
+% metricsCell2 = networkMetrics(A)
+% mean(metricsCell2{2,2})/(0.5*n)
+% %%
+% clc
+% A_dir = [0 1 0 0 1 0;...
+%          0 0 1 1 0 0;...
+%          0 1 0 1 0 0;...
+%          0 1 1 0 0 0;...
+%          1 0 1 0 0 0;...
+%          0 0 1 0 0 0];
+%      
+% % A_undir = [0 1 0 0 1 0;...
+% %            1 0 1 1 0 0;...
+% %          0 1 0 1 1 1;...
+% %          0 1 1 0 0 0;...
+% %          1 0 1 0 0 0;...
+% %          0 0 1 0 0 0];
+% 
+% metricsCell2 = networkMetrics(A_dir);
+% metricsCell2{2,2}
+% 
+% % A_dir2 = A_dir + eye(6);
+% % G = digraph(A_dir2);
+% % betweenness2 = centrality(G, 'betweenness')
+% 
+% %% Lattice
+% clc
+% A = diag(ones(n - 2, 1), -2) + diag(ones(n - 1, 1), -1) + ...
+%     diag(ones(n - 2, 1), 2)+ diag(ones(n - 1, 1), 1) +...
+%     diag(ones(n - 15, 1), -15) + diag(ones(n - 14, 1), -14) + ...
+%     diag(ones(n - 15, 1), 15) + diag(ones(n - 14, 1), 14)...
+%     + eye(16);
+% 
+% metricsCell2 = networkMetrics(A)
+% mean(metricsCell2{2,2})/8;
+
+
+

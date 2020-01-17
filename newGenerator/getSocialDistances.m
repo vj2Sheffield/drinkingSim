@@ -5,7 +5,6 @@
 % stored in the adjacency matrix.
 
 function [adjacencyMatrix, socialDistances] = getSocialDistances(nAgents, inData, USdat_stdev, socialReachDistribution, w_p)
-    adjacencyMatrix = zeros(nAgents, nAgents);  % Preallocate variable for adjacency matrix
     distance_ij = zeros(1, 18); % Preallocate variable for distance calculations
     socialDistances = zeros(nAgents);   % Preallocate temporary variable for social distance measurements
 
@@ -20,11 +19,13 @@ function [adjacencyMatrix, socialDistances] = getSocialDistances(nAgents, inData
                     dTemp_ij = distance_ij(n) + dTemp_ij;   % Get sum of social distances
                 end
                 socialDistances(k, m) = sqrt(dTemp_ij); % Store social distance
-
-                if socialDistances(k, m) < socialReachDistribution(m) && socialDistances(m, k) < socialReachDistribution(k) % If a connection is made (undirected)
-                    adjacencyMatrix(k, m) = 1;  % Set adjacency matrix element to 1
-                end
             end
         end
     end
+    
+    socialReachDistribution_temp = socialReachDistribution(1:nAgents, 1);
+    socialReachDistribution2 = repmat(socialReachDistribution_temp, 1, nAgents);
+    adjacencyMatrix = double(socialDistances < socialReachDistribution2);
+    adjacencyMatrix = adjacencyMatrix - diag(diag(adjacencyMatrix));
 end
+
